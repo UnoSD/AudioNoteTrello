@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Xamarin.Essentials;
 
 namespace AudioNoteTrello
 {
     class AudioNoteProcessor
     {
-        public static Task ProcessAsync(string getFileNameForRecording, Action<string> log)
+        public static async Task ProcessAsync(string filePath, Action<string> log)
         {
-            throw new System.NotImplementedException();
+            log($"Started processing {filePath}");
+
+            log(await SecureStorage.GetAsync("CognitiveServiceApi"));
+
+            log("done");
         }
     }
 }

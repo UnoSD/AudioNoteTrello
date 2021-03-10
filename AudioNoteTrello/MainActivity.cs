@@ -91,7 +91,7 @@ namespace AudioNoteTrello
         }
 
         static void Message(object sender, string text) =>
-            Snackbar.Make((View) sender, text, Snackbar.LengthLong)
+            Snackbar.Make((View) sender, text, BaseTransientBottomBar.LengthLong)
                     .SetAction("Action", (View.IOnClickListener) null)
                     .Show();
 
@@ -110,7 +110,7 @@ namespace AudioNoteTrello
                 var rationale = 
                     Snackbar.Make(GetLayoutForSnackbar(activity),
                                   "Resource.String.permissions_rationale pippopeppe",
-                                  Snackbar.LengthIndefinite);
+                                  BaseTransientBottomBar.LengthIndefinite);
 
                 rationale.SetAction(
                     "Oki", 
