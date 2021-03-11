@@ -7,18 +7,66 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_main">
 
-    <Button
-        android:text="Record"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-		android:layout_centerHorizontal="true"
-        android:id="@+id/record" />
-    <TextView
-        android:text="App started"
+	<LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="800px"
-        android:layout_centerHorizontal="true"
-		android:layout_alignParentBottom="true"
-        android:id="@+id/logView" />
+        android:layout_height="match_parent"
+        android:id="@+id/mainLayout">
+
+		<Button
+			android:text="Record"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerHorizontal="true"
+			android:id="@+id/record" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:minWidth="25px"
+            android:minHeight="25px"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/apiLayout">
+
+	        <EditText
+				android:tooltipText="Api key value"
+		        android:inputType="text"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:id="@+id/apiValue" />
+
+	        <LinearLayout
+		        android:orientation="horizontal"
+		        android:minWidth="25px"
+		        android:minHeight="25px"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:id="@+id/apiButtonsLayout">
+		        <Button
+			        android:text="Set Cognitive Api Key"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_centerHorizontal="true"
+			        android:id="@+id/setCognitiveApiKey" />
+		        <Button
+			        android:text="Set Trello Key"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_centerHorizontal="true"
+			        android:id="@+id/setTrelloApiKey" />
+	        </LinearLayout>
+
+        </LinearLayout>
+
+		<TextView
+			android:text="App started"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_centerHorizontal="true"
+			android:layout_alignParentBottom="true"
+			android:id="@+id/logView" />
+	</LinearLayout>
+
+
 
 </RelativeLayout>

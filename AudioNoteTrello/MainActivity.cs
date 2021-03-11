@@ -31,6 +31,11 @@ namespace AudioNoteTrello
             SetContentView(Resource.Layout.activity_main);
 
             FindViewById<Button>(Resource.Id.record)!.Touch += RecordButtonTouch;
+            var apiText = FindViewById<EditText>(Resource.Id.apiValue)!;
+            FindViewById<Button>(Resource.Id.setCognitiveApiKey)!.Click +=
+                async (_, __) => await SecureStorage.SetAsync("CognitiveServiceApiKey", apiText!.Text);
+            FindViewById<Button>(Resource.Id.setTrelloApiKey)!.Click +=
+                async (_, __) => await SecureStorage.SetAsync("TrelloApiKey", apiText!.Text);
             _logView = FindViewById<TextView>(Resource.Id.logView);
         }
         
