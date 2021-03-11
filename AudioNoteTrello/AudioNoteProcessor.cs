@@ -10,9 +10,17 @@ namespace AudioNoteTrello
         {
             log($"Started processing {filePath}");
 
-            log(await SecureStorage.GetAsync("CognitiveServiceApi"));
+            var apiKey = await SecureStorage.GetAsync("CognitiveServiceApiKey");
 
-            log("done");
+            if(string.IsNullOrWhiteSpace(apiKey))
+            {
+                log("Unable to find CognitiveServiceApiKey, set values first");
+                return;
+            }
+
+            log(apiKey);
+
+            log("Done");
         }
     }
 }
