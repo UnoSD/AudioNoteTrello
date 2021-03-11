@@ -22,6 +22,7 @@ namespace AudioNoteTrello
     public class MainActivity : AppCompatActivity
     {
         MediaRecorder _recorder;
+        TextView _logView;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -30,6 +31,7 @@ namespace AudioNoteTrello
             SetContentView(Resource.Layout.activity_main);
 
             FindViewById<Button>(Resource.Id.record)!.Touch += RecordButtonTouch;
+            _logView = FindViewById<TextView>(Resource.Id.logView);
         }
         
         async void RecordButtonTouch(object sender, View.TouchEventArgs e)
@@ -87,7 +89,7 @@ namespace AudioNoteTrello
 
             if (File.Exists(GetFileNameForRecording(this)))
                 await AudioNoteProcessor.ProcessAsync(GetFileNameForRecording(this),
-                                                      msg => Message(sender, msg));
+                                                      msg => _logView.Text += "\n" + msg);
         }
 
         static void Message(object sender, string text) =>
