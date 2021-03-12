@@ -75,14 +75,18 @@ namespace AudioNoteTrello
             }
         }
 
+        const string Ext = "3gp";
+        const OutputFormat Format = OutputFormat.ThreeGpp;
+        const AudioEncoder Encoder = AudioEncoder.AmrNb;
+
         void StartRecording()
         {
             _recorder = new MediaRecorder();
 
             _recorder.SetAudioSource(AudioSource.Mic);
-            _recorder.SetOutputFormat(OutputFormat.ThreeGpp);
-            _recorder.SetOutputFile(GetFileNameForRecording(this));
-            _recorder.SetAudioEncoder(AudioEncoder.AmrNb);
+            _recorder.SetOutputFormat(Format);
+            _recorder.SetOutputFile(GetFileNameForRecording(this, Ext));
+            _recorder.SetAudioEncoder(Encoder);
 
             try
             {
@@ -105,8 +109,8 @@ namespace AudioNoteTrello
             _recorder.Release();
             _recorder = null;
 
-            if (File.Exists(GetFileNameForRecording(this)))
-                await AudioNoteProcessor.ProcessAsync(GetFileNameForRecording(this),
+            if (File.Exists(GetFileNameForRecording(this, Ext)))
+                await AudioNoteProcessor.ProcessAsync(GetFileNameForRecording(this, Ext),
                                                       msg => _logView.Text += "\n" + msg);
         }
 
@@ -149,8 +153,8 @@ namespace AudioNoteTrello
         public static View GetLayoutForSnackbar(Activity activity) => 
             activity.FindViewById(Android.Resource.Id.Content);
         
-        public static string GetFileNameForRecording(Context context) => 
+        public static string GetFileNameForRecording(Context context, string ext) => 
             Path.Combine(context.GetExternalFilesDir(Environment.DirectoryMusic)!.AbsolutePath,
-                         "note.3gpp");
+                         "note." + ext);
     }
 }

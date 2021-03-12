@@ -3,7 +3,6 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Android.Util;
 using Xamarin.Essentials;
 
 namespace AudioNoteTrello
@@ -15,7 +14,7 @@ namespace AudioNoteTrello
 
         public static async Task ProcessAsync(string filePath, Action<string> log)
         {
-            log($"***** Started processing\n{filePath}\n*****");
+            log($"***** Started processing\n{filePath}");
 
             var csApiKey = await SecureStorage.GetAsync("CognitiveServiceApiKey");
             var tApiKey = await SecureStorage.GetAsync("TrelloApiKey");
@@ -55,15 +54,13 @@ namespace AudioNoteTrello
 
             log("***** STT");
             log(audioText);
-            log("*****");
 
             var content = await CreateTrelloCard(filePath, tApiKey, tListId, tApiToken, audioText);
 
             log("***** Trello");
             log(content);
-            log("*****");
 
-            log("Done");
+            log("***** Done");
         }
 
         static async Task<string> CreateTrelloCard(string filePath, string apiKey, string listId, string token, string text)
@@ -83,7 +80,7 @@ namespace AudioNoteTrello
                 {new StringContent(listId), "\"idList\""},
                 {new StringContent(text), "\"name\""},
                 {new StringContent("Note from AudioNoteTrello"), "\"desc\""},
-                {new StreamContent(File.OpenRead(filePath)), "\"fileSource\"", "note.3gp"}
+                {new StreamContent(File.OpenRead(filePath)), "\"fileSource\"", $"note.{filePath[^3..]}"}
             };
 
             var result = await trelloClient.PostAsync("1/cards", formData);
@@ -106,7 +103,7 @@ namespace AudioNoteTrello
 
             var response = await speechClient.PostAsync(SpeechUri, new StreamContent(fileStream));
 
-            log($"***** STT response: {response.StatusCode}");
+            log($"***** STT response\n{response.StatusCode}");
 
             return await response.Content.ReadAsStringAsync();
         }
