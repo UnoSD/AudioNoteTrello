@@ -36,24 +36,55 @@
 		        android:id="@+id/apiValue" />
 
 	        <LinearLayout
-		        android:orientation="horizontal"
+		        android:orientation="vertical"
 		        android:minWidth="25px"
 		        android:minHeight="25px"
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
 		        android:id="@+id/apiButtonsLayout">
-		        <Button
-			        android:text="Set Cognitive Api Key"
-			        android:layout_width="wrap_content"
+
+		        <LinearLayout
+			        android:orientation="horizontal"
+			        android:minWidth="25px"
+			        android:minHeight="25px"
+			        android:layout_width="match_parent"
 			        android:layout_height="wrap_content"
-			        android:layout_centerHorizontal="true"
-			        android:id="@+id/setCognitiveApiKey" />
-		        <Button
-			        android:text="Set Trello Key"
-			        android:layout_width="wrap_content"
+			        android:id="@+id/apiLayout">
+			        <Button
+				        android:text="Set Cognitive key"
+				        android:layout_width="wrap_content"
+				        android:layout_height="wrap_content"
+				        android:layout_centerHorizontal="true"
+				        android:id="@+id/setCognitiveApiKey" />
+			        <Button
+				        android:text="Set Trello key"
+				        android:layout_width="wrap_content"
+				        android:layout_height="wrap_content"
+				        android:layout_centerHorizontal="true"
+				        android:id="@+id/setTrelloApiKey" />
+		        </LinearLayout>
+
+		        <LinearLayout
+			        android:orientation="horizontal"
+			        android:minWidth="25px"
+			        android:minHeight="25px"
+			        android:layout_width="match_parent"
 			        android:layout_height="wrap_content"
-			        android:layout_centerHorizontal="true"
-			        android:id="@+id/setTrelloApiKey" />
+			        android:id="@+id/tokenIdLayout">
+			        <Button
+				        android:text="Set Trello token"
+				        android:layout_width="wrap_content"
+				        android:layout_height="wrap_content"
+				        android:layout_centerHorizontal="true"
+				        android:id="@+id/setTrelloApiToken" />
+			        <Button
+				        android:text="Set list ID"
+				        android:layout_width="wrap_content"
+				        android:layout_height="wrap_content"
+				        android:layout_centerHorizontal="true"
+				        android:id="@+id/setTrelloListId" />
+		        </LinearLayout>
+
 	        </LinearLayout>
 
         </LinearLayout>

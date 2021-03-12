@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Android;
@@ -15,6 +16,7 @@ using AndroidX.Core.App;
 using AndroidX.Core.Content;
 using Google.Android.Material.Snackbar;
 using Xamarin.Essentials;
+using Environment = Android.OS.Environment;
 
 namespace AudioNoteTrello
 {
@@ -24,6 +26,14 @@ namespace AudioNoteTrello
         MediaRecorder _recorder;
         TextView _logView;
 
+        void SetButtonClick(int id, Func<Task> onClick) =>
+            FindViewById<Button>(id)!.Click +=
+                async (_, __) => await onClick();
+
+        void SetSecretButtonClick(int id, string secretName, TextView apiText) =>
+            FindViewById<Button>(id)!.Click +=
+                async (_, __) => await SecureStorage.SetAsync(secretName, apiText.Text);
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -31,12 +41,15 @@ namespace AudioNoteTrello
             SetContentView(Resource.Layout.activity_main);
 
             FindViewById<Button>(Resource.Id.record)!.Touch += RecordButtonTouch;
+
             var apiText = FindViewById<EditText>(Resource.Id.apiValue)!;
-            FindViewById<Button>(Resource.Id.setCognitiveApiKey)!.Click +=
-                async (_, __) => await SecureStorage.SetAsync("CognitiveServiceApiKey", apiText!.Text);
-            FindViewById<Button>(Resource.Id.setTrelloApiKey)!.Click +=
-                async (_, __) => await SecureStorage.SetAsync("TrelloApiKey", apiText!.Text);
+
             _logView = FindViewById<TextView>(Resource.Id.logView);
+
+            SetSecretButtonClick(Resource.Id.setCognitiveApiKey, "CognitiveServiceApiKey", apiText);
+            SetSecretButtonClick(Resource.Id.setTrelloApiKey, "TrelloApiKey", apiText);
+            SetSecretButtonClick(Resource.Id.setTrelloListId, "TrelloListId", apiText);
+            SetSecretButtonClick(Resource.Id.setTrelloApiToken, "TrelloApiToken", apiText);
         }
         
         async void RecordButtonTouch(object sender, View.TouchEventArgs e)

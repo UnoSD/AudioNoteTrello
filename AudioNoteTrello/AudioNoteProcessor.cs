@@ -1,17 +1,26 @@
 ﻿using System;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Android.Util;
 using Xamarin.Essentials;
 
 namespace AudioNoteTrello
 {
     class AudioNoteProcessor
     {
+        const string SpeechUri = "speech/recognition/conversation/cognitiveservices/v1?language=it-IT&format=detailed";
+        const string SpeechRegion = "westus";
+
         public static async Task ProcessAsync(string filePath, Action<string> log)
         {
-            log($"Started processing {filePath}");
+            log($"***** Started processing\n{filePath}\n*****");
 
             var csApiKey = await SecureStorage.GetAsync("CognitiveServiceApiKey");
             var tApiKey = await SecureStorage.GetAsync("TrelloApiKey");
+            var tListId = await SecureStorage.GetAsync("TrelloListId");
+            var tApiToken = await SecureStorage.GetAsync("TrelloApiToken");
 
             if(string.IsNullOrWhiteSpace(csApiKey))
             {
@@ -25,7 +34,81 @@ namespace AudioNoteTrello
                 return;
             }
 
+            if(string.IsNullOrWhiteSpace(tListId))
+            {
+                log("Unable to find TrelloListId, set values first");
+                return;
+            }
+
+            if(string.IsNullOrWhiteSpace(tApiToken))
+            {
+                log("Unable to find TrelloApiToken, set values first");
+                return;
+            }
+
+            await ProcessInternalAsync(filePath, log, csApiKey, tApiKey, tListId, tApiToken);
+        }
+
+        public static async Task ProcessInternalAsync(string filePath, Action<string> log, string csApiKey, string tApiKey, string tListId, string tApiToken)
+        {
+            var audioText = await SpeachToText(filePath, csApiKey, log);
+
+            log("***** STT");
+            log(audioText);
+            log("*****");
+
+            var content = await CreateTrelloCard(filePath, tApiKey, tListId, tApiToken, audioText);
+
+            log("***** Trello");
+            log(content);
+            log("*****");
+
             log("Done");
+        }
+
+        static async Task<string> CreateTrelloCard(string filePath, string apiKey, string listId, string token, string text)
+        {
+            using var trelloClient = new HttpClient
+            {
+                BaseAddress = new Uri("https://api.trello.com"),
+                DefaultRequestHeaders =
+                {
+                    Authorization = new AuthenticationHeaderValue("OAuth",
+                        $"oauth_consumer_key=\"{apiKey}\", oauth_token=\"{token}\"")
+                }
+            };
+
+            var formData = new MultipartFormDataContent
+            {
+                {new StringContent(listId), "\"idList\""},
+                {new StringContent(text), "\"name\""},
+                {new StringContent("Note from AudioNoteTrello"), "\"desc\""},
+                {new StreamContent(File.OpenRead(filePath)), "\"fileSource\"", "note.3gp"}
+            };
+
+            var result = await trelloClient.PostAsync("1/cards", formData);
+
+            return await result.Content.ReadAsStringAsync();
+        }
+
+        static async Task<string> SpeachToText(string filePath, string apiKey, Action<string> log)
+        {
+            using var speechClient = new HttpClient
+            {
+                BaseAddress = new Uri($"https://{SpeechRegion}.stt.speech.microsoft.com"),
+                DefaultRequestHeaders =
+                {
+                    {"Ocp-Apim-Subscription-Key", apiKey}
+                }
+            };
+
+            await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+
+            var response = await speechClient.PostAsync(SpeechUri, new StreamContent(fileStream));
+
+            log($"***** STT response: {response.StatusCode}");
+
+            return await response.Content.ReadAsStringAsync();
         }
     }
 }
