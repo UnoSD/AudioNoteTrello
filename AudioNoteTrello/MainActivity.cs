@@ -31,8 +31,7 @@ namespace AudioNoteTrello
                 async (_, __) => await onClick();
 
         void SetSecretButtonClick(int id, string secretName, TextView apiText) =>
-            FindViewById<Button>(id)!.Click +=
-                async (_, __) => await SecureStorage.SetAsync(secretName, apiText.Text);
+            SetButtonClick(id, () => SecureStorage.SetAsync(secretName, apiText.Text));
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
