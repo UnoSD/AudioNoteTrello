@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -58,7 +61,7 @@ namespace AudioNoteTrello
             var content = await CreateTrelloCard(filePath, tApiKey, tListId, tApiToken, audioText);
 
             log("***** Trello");
-            log(content);
+            log(content.Substring(0, 20));
 
             log("***** Done");
         }
@@ -103,9 +106,35 @@ namespace AudioNoteTrello
 
             var response = await speechClient.PostAsync(SpeechUri, new StreamContent(fileStream));
 
-            log($"***** STT response\n{response.StatusCode}");
+            log($"***** STT response");
+            log($"{(int)response.StatusCode} {response.StatusCode}");
+            log($"{response.ReasonPhrase}");
+            log($"Success:{response.IsSuccessStatusCode}");
+            log(string.Join('\n', response.Headers.Select(x => $"{x.Key}: {string.Join(", ", x.Value)}\n")));
 
-            return await response.Content.ReadAsStringAsync();
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<SttResponse>(responseContent)
+                              .NBest
+                              .FirstOrDefault()?
+                              .Display ?? "Unable to parse";
         }
+    }
+
+    public class NBest
+    {
+        public double Confidence { get; set; }
+        public string Lexical { get; set; }
+        public string ITN { get; set; }
+        public string MaskedITN { get; set; }
+        public string Display { get; set; }
+    }
+
+    public class SttResponse
+    {
+        public string RecognitionStatus { get; set; }
+        public int Offset { get; set; }
+        public int Duration { get; set; }
+        public List<NBest> NBest { get; set; }
     }
 }

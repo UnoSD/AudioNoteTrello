@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Android;
 using Android.App;
@@ -8,7 +9,6 @@ using Android.Content;
 using Android.Content.PM;
 using Android.Media;
 using Android.OS;
-using Android.Util;
 using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
@@ -23,7 +23,6 @@ namespace AudioNoteTrello
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
-        MediaRecorder _recorder;
         TextView _logView;
 
         void SetButtonClick(int id, Func<Task> onClick) =>
@@ -75,39 +74,103 @@ namespace AudioNoteTrello
             }
         }
 
-        const string Ext = "3gp";
-        const OutputFormat Format = OutputFormat.ThreeGpp;
-        const AudioEncoder Encoder = AudioEncoder.AmrNb;
+        const string Ext = "wav";
 
         void StartRecording()
         {
-            _recorder = new MediaRecorder();
-
-            _recorder.SetAudioSource(AudioSource.Mic);
-            _recorder.SetOutputFormat(Format);
-            _recorder.SetOutputFile(GetFileNameForRecording(this, Ext));
-            _recorder.SetAudioEncoder(Encoder);
-
-            try
+            _cts = new CancellationTokenSource();
+            
+            _task = Task.Run(async () =>
             {
-                _recorder.Prepare();
-            }
-            catch (IOException ioe)
-            {
-                Log.Error(typeof(MainActivity).FullName, ioe.ToString());
-            }
+                var minBufferSize = AudioTrack.GetMinBufferSize(16000, ChannelOut.Mono, Encoding.Pcm16bit); 
 
-            _recorder.Start();
+                var recorder = new AudioRecord(AudioSource.Mic, 16000, ChannelIn.Mono, Encoding.Pcm16bit, minBufferSize);
+      
+                recorder.StartRecording();
+
+                var audioBuffer = new byte[minBufferSize];
+
+                await using var fileStream = 
+                    new FileStream(GetFileNameForRecording(this, Ext),
+                                   FileMode.Create,
+                                   FileAccess.Write);
+
+                while (!_cts.IsCancellationRequested)
+                {
+                    var bytesRead = await recorder.ReadAsync(audioBuffer, 0, minBufferSize);
+
+                    await fileStream.WriteAsync(audioBuffer, 0, bytesRead, CancellationToken.None);
+                }
+
+                await using var writer = new BinaryWriter(fileStream, System.Text.Encoding.UTF8);
+
+                writer.Seek(0, SeekOrigin.Begin);
+			
+                // ChunkID               
+                writer.Write('R');
+                writer.Write('I');
+                writer.Write('F');
+                writer.Write('F');
+
+                // ChunkSize               
+                writer.Write(BitConverter.GetBytes(fileStream.Length + 36), 0, 4);
+			
+                // Format               
+                writer.Write('W');
+                writer.Write('A');
+                writer.Write('V');
+                writer.Write('E');
+			
+                //SubChunk               
+                writer.Write('f');
+                writer.Write('m');
+                writer.Write('t');
+                writer.Write(' ');
+
+                // SubChunk1Size - 16 for PCM
+                writer.Write(BitConverter.GetBytes(16), 0, 4);
+			
+                // AudioFormat - PCM=1
+                writer.Write(BitConverter.GetBytes((short)1), 0, 2);
+
+                // Channels: Mono=1, Stereo=2
+                writer.Write(BitConverter.GetBytes(1), 0, 2);
+			
+                // SampleRate
+                writer.Write(16000);
+		
+                // ByteRate
+                var byteRate = 16000 * 1 * 16 / 8;               
+                writer.Write(BitConverter.GetBytes(byteRate), 0, 4);
+
+                // BlockAlign
+                var blockAlign = 1 * 16 / 8;
+                writer.Write(BitConverter.GetBytes((short)blockAlign), 0, 2);
+
+                // BitsPerSample
+                writer.Write(BitConverter.GetBytes(16), 0, 2);
+			
+                // SubChunk2ID
+                writer.Write('d');
+                writer.Write('a');
+                writer.Write('t');
+                writer.Write('a');
+			
+                // Subchunk2Size
+                writer.Write(BitConverter.GetBytes(fileStream.Length), 0, 4);
+
+                fileStream.Close();
+
+                recorder.Stop();
+                recorder.Release();
+            }, CancellationToken.None);
         }
 
         async Task StopRecording()
         {
-            if (_recorder == null)
-                return;
+            _cts.Cancel();
 
-            _recorder.Stop();
-            _recorder.Release();
-            _recorder = null;
+            await _task;
 
             if (File.Exists(GetFileNameForRecording(this, Ext)))
                 await AudioNoteProcessor.ProcessAsync(GetFileNameForRecording(this, Ext),
@@ -128,6 +191,8 @@ namespace AudioNoteTrello
         };
 
         public static readonly int RequestAllPermissions = 1200;
+        CancellationTokenSource _cts;
+        Task _task;
 
         public static bool HasPermissionToRecord(Context context) =>
             !RequiredPermissions.Select(permission => ContextCompat.CheckSelfPermission(context, permission))
@@ -160,7 +225,7 @@ namespace AudioNoteTrello
             activity.FindViewById(Android.Resource.Id.Content);
 
         public static string GetFileNameForRecording(Context context, string ext) =>
-            Path.Combine(context.GetExternalFilesDir(Environment.DirectoryMusic)!.AbsolutePath,
+            Path.Combine(context.GetExternalFilesDir(Environment.DirectoryMusic)!.AbsolutePath!,
                 "note." + ext);
     }
 }
